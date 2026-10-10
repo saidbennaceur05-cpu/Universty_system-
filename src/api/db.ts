@@ -6,8 +6,8 @@ import type { Database } from "../types";
 import { buildSeed } from "../data/seed";
 import { hashPassword } from "./crypto";
 
-const DB_KEY = "uniabsence.db.v1";
-const SESSION_KEY = "uniabsence.session.v1";
+const DB_KEY = "uniabsence.db.v2";
+const SESSION_KEY = "uniabsence.session.v2";
 
 let db: Database | null = null;
 let version = 0;
@@ -21,7 +21,7 @@ export async function initDb(): Promise<Database> {
   if (raw) {
     try {
       const parsed = JSON.parse(raw) as Database;
-      if (parsed && parsed.version === 1 && Array.isArray(parsed.users)) {
+      if (parsed && parsed.version === 2 && Array.isArray(parsed.admins)) {
         db = parsed;
         return db;
       }

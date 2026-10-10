@@ -1,7 +1,7 @@
 import { DragEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import * as api from "../api";
 import { useMutation, useQuery } from "../api/useQuery";
-import type { AbsenceRow, Student } from "../types";
+import type { AbsenceRow, CertificateRow, Student } from "../types";
 import { ACCEPTED_CERTIFICATE_TYPES, MAX_CERTIFICATE_BYTES, MAX_PREVIEW_BYTES } from "../types";
 import { formatBytes, formatDate, readFileAsDataUrl } from "../utils/format";
 import { AbsenceTable } from "./AbsenceTable";
@@ -16,7 +16,7 @@ interface PickedFile {
 
 const canJustify = (r: AbsenceRow) => r.absence.status === "unjustified" || r.absence.status === "rejected";
 
-export function CertificateUploadForm({ student, preselectedAbsenceId, onDone }: { student: Student; preselectedAbsenceId?: string; onDone: (row: api.CertificateRow) => void }) {
+export function CertificateUploadForm({ student, preselectedAbsenceId, onDone }: { student: Student; preselectedAbsenceId?: string; onDone: (row: CertificateRow) => void }) {
   const absences = useQuery(() => api.listAbsences({ studentId: student.id, pageSize: 500 }), [student.id]);
   const [selected, setSelected] = useState<Set<string>>(new Set(preselectedAbsenceId ? [preselectedAbsenceId] : []));
   const [file, setFile] = useState<PickedFile | null>(null);

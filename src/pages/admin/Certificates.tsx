@@ -61,7 +61,7 @@ export default function CertificatesPage() {
           </>
         )}
       </Card>
-      {detail && <AbsenceDetailModal absenceId={detail} role="admin" onClose={() => setDetail(null)} />}
+      {detail && <AbsenceDetailModal absenceId={detail} onClose={() => setDetail(null)} />}
     </>
   );
 }

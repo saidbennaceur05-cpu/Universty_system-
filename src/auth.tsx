@@ -8,9 +8,10 @@ interface AuthContextValue {
   login: (email: string, password: string) => Promise<AuthSession>;
   logout: () => Promise<void>;
   setSession: (s: AuthSession | null) => void;
+  isSuperAdmin: boolean;
 }
 
-const AuthContext = createContext<AuthContextValue>({ session: null, ready: false, login: async () => { throw new Error("no provider"); }, logout: async () => {}, setSession: () => {} });
+const AuthContext = createContext<AuthContextValue>({ session: null, ready: false, login: async () => { throw new Error("no provider"); }, logout: async () => {}, setSession: () => {}, isSuperAdmin: false });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<AuthSession | null>(null);
@@ -18,11 +19,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [bootError, setBootError] = useState<string | null>(null);
 
   useEffect(() => {
-    api
-      .bootstrap()
-      .then((s) => setSession(s))
-      .catch((e: unknown) => setBootError(e instanceof Error ? e.message : "Impossible de démarrer l'application."))
-      .finally(() => setReady(true));
+    api.bootstrap().then((s) => setSession(s)).catch((e: unknown) => setBootError(e instanceof Error ? e.message : "Impossible de démarrer l'application.")).finally(() => setReady(true));
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
@@ -38,14 +35,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   if (bootError) return <div className="boot-error"><strong>UniAbsence n'a pas pu démarrer.</strong><p>{bootError}</p></div>;
 
-  return <AuthContext.Provider value={{ session, ready, login, logout, setSession }}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ session, ready, login, logout, setSession, isSuperAdmin: session?.user.role === "super-admin" }}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
   return useContext(AuthContext);
 }
 
-/** Convenience for pages that can only render with an authenticated user. */
 export function useSession(): AuthSession {
   const { session } = useAuth();
   if (!session) throw new Error("useSession() appelé hors session.");

@@ -1,8 +1,12 @@
-# UniAbsence
+# UniAbsence — plateforme d'administration des absences
 
-Gestion des absences universitaires : l'administration gère étudiants, enseignants, matières, absences et certificats ; les enseignants font l'appel ; les étudiants suivent leurs absences et déposent leurs justificatifs.
+Application d'administration universitaire pour la gestion des absences : étudiants, absences,
+certificats, étudiants à risque, rapports, imports, comptes administrateurs et journal d'activité.
+Réservée au service de scolarité (pas d'accès étudiant ni enseignant).
 
-Application React 19 + Vite 8 + TypeScript. Cette version fonctionne **sans serveur** : toutes les données vivent dans le `localStorage` du navigateur, derrière une couche API asynchrone (`src/api/`) conçue pour être remplacée par un vrai backend sans toucher aux écrans.
+React 19 + Vite 8 + TypeScript. Le front-end parle à une **couche API unique** (`src/api/`), aujourd'hui
+implémentée sur le `localStorage` du navigateur. Un backend réel se branche en réimplémentant ce seul
+module : voir `API_CONTRACT.md`.
 
 ## Démarrer
 
@@ -13,53 +17,71 @@ npm run typecheck  # tsc --noEmit
 npm run build      # production dans dist/
 ```
 
-Node 22 (voir `.mise.toml`). `pnpm` fonctionne aussi (`pnpm-lock.yaml` est présent).
+Node 22 (`.mise.toml`). `pnpm` fonctionne aussi.
 
 ## Comptes de démonstration
 
 | Rôle | Email | Mot de passe |
 | --- | --- | --- |
-| Administration | admin@univ.tn | Admin123! |
-| Enseignant (Dr. Amine Larbi) | a.larbi@univ.tn | Prof123! |
-| Étudiante (Lina Benali) | lina.benali@etu.univ.tn | Etud123! |
+| Super administrateur | admin@univ.tn | Admin123! |
+| Agent de scolarité | agent@univ.tn | Agent123! |
 
-Les autres enseignants du jeu de données utilisent `Prof123!`, les étudiants `Etud123!` (adresse `prenom.nom@etu.univ.tn`). Le compte de M. Karim Jebali est désactivé pour illustrer ce cas. « Mon compte » (admin) permet de réinitialiser les données de démonstration.
+Le super administrateur accède à tout. L'agent gère étudiants, absences, certificats, imports, rapports
+et matières, mais pas les comptes admin, les paramètres ni le journal.
 
-## Ce que fait chaque rôle
+## Fonctionnalités
 
-**Administration** : tableau de bord calculé (effectifs, certificats en attente, absences par mois sur l'année universitaire choisie, étudiants à surveiller, activité récente), CRUD étudiants avec recherche, filtres, pagination et création de compte (mot de passe temporaire à changer à la première connexion), comptes enseignants (matières attribuées, activation/désactivation, réinitialisation de mot de passe, suppression bloquée si des séances existent), catalogue des matières, liste des absences filtrable avec fiche détaillée, saisie manuelle d'une absence, file des certificats à valider ou refuser (motif obligatoire), dépôt d'un certificat au nom d'un étudiant.
-
-**Enseignant** : tableau de bord de ses matières, appel par séance (matière, groupe, date, horaire, étudiants absents) avec reprise et correction d'une séance existante, liste de ses séances, consultation des absences dans ses matières. Les absences déjà justifiées ou en attente sont verrouillées lors d'une correction d'appel.
-
-**Étudiant** : tableau de bord avec seuil d'alerte par matière (3 absences non justifiées), liste de ses absences, dépôt d'un justificatif (PDF/JPG/PNG, 5 Mo max, une ou plusieurs absences couvertes par le même document, période contrôlée), suivi des justificatifs, retrait d'un justificatif encore en attente.
-
-**Tous** : connexion réelle (mot de passe haché), session conservée au rechargement, changement de mot de passe, garde par rôle sur les routes.
+- **Tableau de bord** : effectifs, certificats en attente, étudiants à risque, absences du mois, graphe
+  mensuel par année universitaire, activité récente, top des cas à surveiller.
+- **Étudiants** : recherche, filtres (filière/niveau/groupe), pagination, ajout/édition, suppression,
+  sélection multiple pour suppression en lot, export CSV de la liste filtrée.
+- **Absences** : onglets par statut, filtres, fiche détaillée (aperçu du certificat, validation/refus,
+  décision manuelle, suppression), saisie manuelle, **actions en lot** (justifier / non justifier /
+  supprimer), export CSV.
+- **Certificats** : file des justificatifs à traiter, validation ou refus motivé, dépôt pour un étudiant.
+- **Étudiants à risque** : moteur de seuils (par matière et global, configurables), page dédiée filtrable,
+  **génération d'une mise en garde** par étudiant (texte prêt à copier + impression / PDF).
+- **Rapports** : analyse par année, filière, niveau, matière, période ; graphes par mois, matière, groupe ;
+  classement des étudiants les plus absents ; **export Excel (CSV)**.
+- **Importer** : CSV d'étudiants et d'absences, avec modèle téléchargeable, **prévisualisation ligne par
+  ligne** (erreurs et doublons signalés) puis confirmation.
+- **Comptes admin** (super admin) : création (mot de passe temporaire), édition, activation/désactivation,
+  réinitialisation de mot de passe, suppression — avec garde « au moins un super admin actif ».
+- **Paramètres** (super admin) : nom de l'établissement, seuils d'alerte, début d'année universitaire,
+  listes des filières / niveaux / groupes, réinitialisation des données de démonstration.
+- **Journal d'activité** (super admin) : historique complet et filtrable de toutes les actions.
+- **Transversal** : connexion réelle (mot de passe haché), session conservée au rechargement, changement
+  de mot de passe imposé à la première connexion, contrôle d'accès par rôle.
 
 ## Architecture
 
 ```
 src/
-  types.ts                  Modèle de données (User, Student, Teacher, Subject, Session, Absence, Certificate, Activity)
-  data/seed.ts              Jeu de démonstration déterministe + filières/niveaux/groupes
+  types.ts              Modèle de données + constantes partagées
+  data/seed.ts          Jeu de démonstration déterministe + listes par défaut
   api/
-    db.ts                   Persistance localStorage, versionnage, abonnement pour React
-    crypto.ts               Hachage des mots de passe (SHA-256 WebCrypto), génération d'identifiants
-    index.ts                L'API applicative : auth, étudiants, enseignants, matières, séances/appel,
-                            absences, certificats, statistiques. Tout est async et renvoie des données simples.
-    useQuery.ts             Hooks useQuery / useMutation / useDebounced
-  router.ts                 Routeur par hash (#/admin/students/42/edit), compatible hébergement statique
-  routes.ts                 Menus par rôle
-  auth.tsx                  Contexte de session
-  components/               UI partagée (ui.tsx), Shell (sidebar/topbar), tables d'absences,
-                            fiche d'absence/certificat, recherche d'étudiant, formulaire de dépôt
-  pages/                    Login, Account, admin/, teacher/, student/
-  index.css                 Styles (CSS maison ; Tailwind est installé mais non utilisé)
+    index.ts            L'API applicative (le contrat — voir API_CONTRACT.md)
+    db.ts               Persistance localStorage + abonnement React
+    crypto.ts           Hachage de mot de passe (démo ; à remplacer côté serveur)
+    useQuery.ts         useQuery / useMutation / useDebounced
+  router.ts routes.ts   Routeur par hash + navigation
+  auth.tsx              Contexte de session (rôle super-admin / staff)
+  components/           ui.tsx (primitives), Shell, tables, fiche d'absence, upload, recherche
+  utils/                format.ts, csv.ts (parse/export CSV + modèles)
+  pages/                Login, Account, admin/* (Dashboard, Students, Absences, Certificates,
+                        AtRisk, Reports, Import, Subjects, Teachers, Accounts, Audit, Settings)
+  index.css             Styles (CSS maison ; Tailwind installé mais non utilisé)
 ```
 
-### Brancher un vrai backend
+## Brancher le backend
 
-Réimplémenter les fonctions de `src/api/index.ts` avec `fetch` vers une API REST (mêmes signatures, mêmes types de retour) et remplacer `db.ts` par la gestion du jeton de session. Les écrans n'importent que `src/api` et `src/types`. Le hachage des mots de passe doit alors se faire côté serveur (bcrypt/argon2), le `crypto.ts` local n'est qu'un substitut de démonstration.
+Tout passe par `src/api/index.ts`. Réimplémenter ses fonctions avec des appels HTTP (mêmes signatures,
+mêmes types, mêmes erreurs `ApiError(message, field?)`), déplacer le hachage des mots de passe et le
+journal d'activité côté serveur, et stocker les fichiers de certificats sur le serveur. Les écrans
+n'importent que `src/api` et `src/types` : aucune page ne change. Détails dans `API_CONTRACT.md`.
 
-### Limites connues de la version locale
+### Limites de la version locale
 
-Les données ne sont pas partagées entre navigateurs ni entre postes. L'aperçu d'un certificat n'est conservé que pour les fichiers de 1,5 Mo ou moins (quota du `localStorage`) ; les fichiers plus lourds sont acceptés mais seules leurs métadonnées sont gardées. Les contrôles de droits sont faits côté client et n'ont donc qu'une valeur fonctionnelle, pas sécuritaire.
+Données propres à un navigateur (non partagées). Aperçu des certificats conservé seulement sous 1,5 Mo
+(quota localStorage). Les contrôles de droits côté client sont fonctionnels, pas sécuritaires : la
+sécurité réelle est la responsabilité du backend.

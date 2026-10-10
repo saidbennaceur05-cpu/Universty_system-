@@ -6,7 +6,7 @@ import type { Subject } from "../../types";
 
 export default function SubjectsPage() {
   const subjects = useQuery(() => api.listSubjects(), []);
-  const teachers = useQuery(() => api.listTeachers({ pageSize: 500 }), []);
+  const teachers = useQuery(() => api.listTeachersSimple(), []);
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
   const [editing, setEditing] = useState<Subject | null>(null);
@@ -42,7 +42,7 @@ export default function SubjectsPage() {
     if (r.ok) toast("Matière supprimée.");
   };
 
-  const teachersOf = (subjectId: string) => (teachers.data?.items ?? []).filter((t) => t.teacher.subjectIds.includes(subjectId));
+  const teachersOf = (subjectId: string) => (teachers.data ?? []).filter((t) => t.subjectIds.includes(subjectId));
 
   return (
     <>
@@ -59,7 +59,7 @@ export default function SubjectsPage() {
                     <tr key={s.id} className={editing?.id === s.id ? "row-active" : ""}>
                       <td data-label="Matière"><strong>{s.name}</strong></td>
                       <td data-label="Code"><code className="code">{s.code}</code></td>
-                      <td data-label="Enseignants" className="wrap muted">{teachersOf(s.id).map((t) => `${t.teacher.title} ${t.teacher.lastName}`).join(", ") || "—"}</td>
+                      <td data-label="Enseignants" className="wrap muted">{teachersOf(s.id).map((t) => `${t.title} ${t.lastName}`).join(", ") || "—"}</td>
                       <td data-label="Actions"><div className="actions"><button type="button" className="icon-btn edit" onClick={() => startEdit(s)} aria-label="Modifier"><Icon name="edit" size={17} /></button><button type="button" className="icon-btn delete" onClick={() => onDelete(s)} aria-label="Supprimer"><Icon name="trash" size={17} /></button></div></td>
                     </tr>
                   ))}

@@ -1,25 +1,25 @@
-// Domain model for UniAbsence.
+// Domain model for UniAbsence (administration platform).
 // Every entity has a string id. Dates are ISO "YYYY-MM-DD", timestamps are ISO datetime strings.
 
-export type Role = "admin" | "teacher" | "student";
-
+/** Admin privilege level. super-admin can manage admin accounts and settings; staff cannot. */
+export type AdminRole = "super-admin" | "staff";
 export type UserStatus = "active" | "disabled";
 
-export interface User {
+export interface AdminUser {
   id: string;
   email: string;
   passwordHash: string;
-  role: Role;
+  role: AdminRole;
   firstName: string;
   lastName: string;
   status: UserStatus;
   mustChangePassword: boolean;
+  lastLoginAt?: string;
   createdAt: string;
 }
 
 export interface Student {
   id: string;
-  userId: string;
   firstName: string;
   lastName: string;
   registrationNumber: string;
@@ -32,7 +32,6 @@ export interface Student {
 
 export interface Teacher {
   id: string;
-  userId: string;
   firstName: string;
   lastName: string;
   title: string; // "Dr.", "Pr.", "M.", "Mme"
@@ -69,7 +68,7 @@ export interface Absence {
   sessionId: string;
   status: AbsenceStatus;
   certificateId?: string;
-  note?: string; // admin note (e.g. reason for refusal, or manual justification)
+  note?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -83,7 +82,6 @@ export interface Certificate {
   fileName: string;
   fileType: string;
   fileSize: number;
-  /** data: URL of the file when small enough to keep in local storage; undefined otherwise. */
   dataUrl?: string;
   startDate: string;
   endDate: string;
@@ -95,47 +93,56 @@ export interface Certificate {
   reviewNote?: string;
 }
 
-export type ActivityKind =
-  | "student_created"
-  | "student_updated"
-  | "student_deleted"
-  | "teacher_created"
-  | "teacher_updated"
-  | "teacher_deleted"
-  | "teacher_status"
-  | "subject_created"
-  | "session_saved"
-  | "absence_created"
-  | "absence_updated"
-  | "absence_deleted"
-  | "certificate_uploaded"
-  | "certificate_accepted"
-  | "certificate_rejected"
-  | "password_changed";
+/** Append-only audit trail: who did what, when. */
+export type AuditAction =
+  | "login"
+  | "admin_created" | "admin_updated" | "admin_status" | "admin_deleted" | "password_changed" | "password_reset"
+  | "student_created" | "student_updated" | "student_deleted" | "students_imported"
+  | "teacher_created" | "teacher_updated" | "teacher_status" | "teacher_deleted"
+  | "subject_created" | "subject_updated" | "subject_deleted"
+  | "absence_created" | "absence_updated" | "absence_deleted" | "absences_imported" | "absences_bulk"
+  | "certificate_uploaded" | "certificate_reviewed" | "certificate_deleted"
+  | "notice_generated"
+  | "settings_updated" | "data_reset";
 
-export interface Activity {
+export interface AuditEntry {
   id: string;
-  kind: ActivityKind;
-  message: string;
+  action: AuditAction;
+  summary: string;
   actorUserId: string;
-  /** Who the activity is about, so students/teachers can see their own feed. */
-  subjectUserIds: string[];
+  actorName: string;
+  /** Entity most affected, for filtering (e.g. "student", "absence"). */
+  entity?: string;
   at: string;
+}
+
+export interface Settings {
+  institutionName: string;
+  /** Unjustified absences in one subject at/above which a student is flagged. */
+  subjectThreshold: number;
+  /** Total unjustified absences across all subjects at/above which a student is flagged. */
+  overallThreshold: number;
+  filieres: string[];
+  niveaux: string[];
+  groupes: string[];
+  /** Academic year start month (1-12). September = 9. */
+  academicYearStartMonth: number;
 }
 
 export interface Database {
   version: number;
-  users: User[];
+  settings: Settings;
+  admins: AdminUser[];
   students: Student[];
   teachers: Teacher[];
   subjects: Subject[];
   sessions: Session[];
   absences: Absence[];
   certificates: Certificate[];
-  activities: Activity[];
+  audit: AuditEntry[];
 }
 
-/** Read models returned by the API: rows joined with the names the UI needs. */
+// Read models returned by the API: rows joined with the names the UI needs.
 export interface AbsenceRow {
   absence: Absence;
   student: Student;
@@ -145,12 +152,12 @@ export interface AbsenceRow {
   certificate: Certificate | undefined;
 }
 
-export interface SessionRow {
-  session: Session;
-  subject: Subject;
-  teacher: Teacher | undefined;
-  absentCount: number;
-  studentCount: number;
+export interface CertificateRow {
+  certificate: Certificate;
+  student: Student;
+  absences: AbsenceRow[];
+  uploadedBy: AdminUser | undefined;
+  reviewedBy: AdminUser | undefined;
 }
 
 export interface Paged<T> {
@@ -162,9 +169,16 @@ export interface Paged<T> {
 }
 
 export interface AuthSession {
-  user: User;
-  student?: Student;
-  teacher?: Teacher;
+  user: AdminUser;
+}
+
+/** One at-risk student with the breakdown that triggered the flag. */
+export interface RiskRow {
+  student: Student;
+  totalUnjustified: number;
+  overallFlag: boolean;
+  subjects: { subject: Subject; unjustified: number; flag: boolean }[];
+  topSubject: { subject: Subject; unjustified: number } | undefined;
 }
 
 export const ABSENCE_STATUS_LABEL: Record<AbsenceStatus, string> = {
@@ -180,17 +194,11 @@ export const CERTIFICATE_STATUS_LABEL: Record<CertificateStatus, string> = {
   rejected: "Refusé",
 };
 
-export const ROLE_LABEL: Record<Role, string> = {
-  admin: "Administrateur",
-  teacher: "Enseignant",
-  student: "Étudiant",
+export const ADMIN_ROLE_LABEL: Record<AdminRole, string> = {
+  "super-admin": "Super administrateur",
+  staff: "Agent de scolarité",
 };
 
-/** Number of unjustified absences in one subject from which a student is flagged. */
-export const UNJUSTIFIED_WARNING_THRESHOLD = 3;
-
-/** Business rule: max certificate size accepted. */
 export const MAX_CERTIFICATE_BYTES = 5 * 1024 * 1024;
-/** Storage constraint of this local version: previews are kept only under this size. */
 export const MAX_PREVIEW_BYTES = 1.5 * 1024 * 1024;
 export const ACCEPTED_CERTIFICATE_TYPES = ["application/pdf", "image/jpeg", "image/png"];

@@ -1,7 +1,7 @@
 {
   "title": "UniAbsence",
   "language": "fr",
-  "description": "UniAbsence : gestion des absences universitaires pour l'administration, les enseignants et les étudiants (appel, justificatifs, validation).",
+  "description": "UniAbsence : plateforme d'administration des absences universitaires (étudiants, absences, certificats, étudiants à risque, rapports, imports).",
   "robots": {
     "index": false
   },

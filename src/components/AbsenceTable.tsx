@@ -3,13 +3,14 @@ import { formatDate, shortFiliere } from "../utils/format";
 import { AbsenceBadge, Icon, Person } from "./ui";
 
 /** Shared absence table. Columns adapt to who is looking: students don't need their own name. */
-export function AbsenceTable({ rows, onDetail, showStudent = true, showTeacher = true, stale = false, selectable, selected, onToggle }: { rows: AbsenceRow[]; onDetail?: (row: AbsenceRow) => void; showStudent?: boolean; showTeacher?: boolean; stale?: boolean; selectable?: (row: AbsenceRow) => boolean; selected?: Set<string>; onToggle?: (id: string) => void }) {
+export function AbsenceTable({ rows, onDetail, showStudent = true, showTeacher = true, stale = false, selectable, selected, onToggle, allIds, onToggleAll }: { rows: AbsenceRow[]; onDetail?: (row: AbsenceRow) => void; showStudent?: boolean; showTeacher?: boolean; stale?: boolean; selectable?: (row: AbsenceRow) => boolean; selected?: Set<string>; onToggle?: (id: string) => void; allIds?: string[]; onToggleAll?: (ids: string[], on: boolean) => void }) {
+  const allOn = !!allIds && allIds.length > 0 && allIds.every((id) => selected?.has(id));
   return (
     <div className={`table-wrap ${stale ? "is-stale" : ""}`}>
       <table>
         <thead>
           <tr>
-            {selectable && <th className="th-check" />}
+            {selectable && <th className="th-check">{allIds && onToggleAll && <input type="checkbox" checked={allOn} onChange={() => onToggleAll(allIds, !allOn)} aria-label="Tout sélectionner" />}</th>}
             {showStudent && <th>Étudiant</th>}
             <th>Date</th>
             <th>Matière</th>

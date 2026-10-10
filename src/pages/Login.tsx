@@ -2,9 +2,8 @@ import { FormEvent, useState } from "react";
 import { useAuth } from "../auth";
 import { Alert, Button, Field, Icon } from "../components/ui";
 import { UniversityMark } from "../components/Shell";
-import { DEMO_ACCOUNTS } from "../data/seed";
+import { DEMO_ADMINS } from "../data/seed";
 import { navigate } from "../router";
-import { homeFor } from "../routes";
 
 export default function Login() {
   const { login } = useAuth();
@@ -23,7 +22,7 @@ export default function Login() {
     setLoading(true);
     try {
       const session = await login(email.trim(), password);
-      navigate(session.user.mustChangePassword ? "/account/password?first=1" : homeFor(session.user.role), true);
+      navigate(session.user.mustChangePassword ? "/account/password?first=1" : "/", true);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Connexion impossible.");
     } finally {
@@ -38,13 +37,13 @@ export default function Login() {
       <section className="login-card">
         <UniversityMark compact />
         <div className="login-copy">
-          <span className="eyebrow">PORTAIL UNIVERSITAIRE</span>
+          <span className="eyebrow">PLATEFORME D'ADMINISTRATION</span>
           <h1>Connexion</h1>
-          <p>Étudiants, enseignants et administration : accédez à votre espace de gestion des absences.</p>
+          <p>Espace réservé au service de scolarité pour la gestion des absences.</p>
         </div>
         {error && <Alert tone="danger">{error}</Alert>}
         <form onSubmit={submit} noValidate>
-          <Field label="Email" type="email" autoComplete="username" placeholder="prenom.nom@univ.tn" value={email} onChange={(e) => setEmail(e.target.value)} error={touched && !email.trim() ? "Veuillez saisir votre email." : undefined} />
+          <Field label="Email" type="email" autoComplete="username" placeholder="admin@univ.tn" value={email} onChange={(e) => setEmail(e.target.value)} error={touched && !email.trim() ? "Veuillez saisir votre email." : undefined} />
           <Field
             label="Mot de passe"
             type={show ? "text" : "password"}
@@ -59,7 +58,7 @@ export default function Login() {
         </form>
         <div className="demo-accounts">
           <span className="demo-title">Comptes de démonstration</span>
-          {DEMO_ACCOUNTS.map((a) => (
+          {DEMO_ADMINS.map((a) => (
             <button key={a.email} type="button" className="demo-account" onClick={() => { setEmail(a.email); setPassword(a.password); setError(null); }}>
               <span><strong>{a.label}</strong><small>{a.email}</small></span>
               <span className="demo-fill">Remplir</span>

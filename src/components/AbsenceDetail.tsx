@@ -1,7 +1,7 @@
 import { useState } from "react";
 import * as api from "../api";
 import { useMutation, useQuery } from "../api/useQuery";
-import type { AbsenceRow, AbsenceStatus, Certificate, Role } from "../types";
+import type { AbsenceRow, AbsenceStatus, Certificate } from "../types";
 import { ABSENCE_STATUS_LABEL } from "../types";
 import { formatBytes, formatDate, formatDateTime, shortFiliere } from "../utils/format";
 import { AbsenceBadge, Alert, Avatar, Button, CertificateBadge, Icon, Loading, Modal, SelectField, TextareaField, useConfirm, useToast } from "./ui";
@@ -82,12 +82,11 @@ function ManualStatusPanel({ row }: { row: AbsenceRow }) {
   );
 }
 
-export function AbsenceDetailModal({ absenceId, role, onClose }: { absenceId: string; role: Role; onClose: () => void }) {
+export function AbsenceDetailModal({ absenceId, onClose }: { absenceId: string; onClose: () => void }) {
   const { data: row, error } = useQuery(() => api.getAbsence(absenceId), [absenceId]);
   const certificate = row?.certificate;
   const certRow = useQuery(() => (certificate ? api.getCertificate(certificate.id) : Promise.resolve(null)), [certificate?.id, certificate?.status]);
   const remove = useMutation(api.deleteAbsence);
-  const withdraw = useMutation(api.deleteCertificate);
   const confirm = useConfirm();
   const toast = useToast();
 
@@ -101,12 +100,6 @@ export function AbsenceDetailModal({ absenceId, role, onClose }: { absenceId: st
     }
   };
 
-  const onWithdraw = async () => {
-    if (!certificate) return;
-    if (!(await confirm({ title: "Retirer le justificatif", tone: "danger", confirmLabel: "Retirer", message: "Le certificat sera supprimé et les absences concernées redeviendront non justifiées." }))) return;
-    const r = await withdraw.run(certificate.id);
-    if (r.ok) toast("Justificatif retiré.");
-  };
 
   return (
     <Modal title="Détail de l'absence" eyebrow={row ? row.subject.name.toUpperCase() : "ABSENCE"} onClose={onClose} wide={!!certificate}>
@@ -134,11 +127,11 @@ export function AbsenceDetailModal({ absenceId, role, onClose }: { absenceId: st
                 </>
               )}
             </div>
-            {role === "admin" && certificate?.status === "pending" && <ReviewPanel certificate={certificate} onDone={() => undefined} />}
-            {role === "admin" && certificate?.status !== "pending" && <ManualStatusPanel row={row} />}
-            {role === "student" && certificate?.status === "pending" && <div className="modal-actions"><Button variant="danger" loading={withdraw.pending} onClick={onWithdraw}>Retirer le justificatif</Button></div>}
-            {(remove.error || withdraw.error) && <Alert tone="danger">{remove.error?.message ?? withdraw.error?.message}</Alert>}
-            {role === "admin" && <div className="modal-actions danger-zone"><Button variant="ghost" icon="trash" loading={remove.pending} onClick={onDelete}>Supprimer cette absence</Button></div>}
+            {certificate?.status === "pending" && <ReviewPanel certificate={certificate} onDone={() => undefined} />}
+            {certificate && certificate.status !== "pending" && <ManualStatusPanel row={row} />}
+            {!certificate && <ManualStatusPanel row={row} />}
+            {remove.error && <Alert tone="danger">{remove.error.message}</Alert>}
+            <div className="modal-actions danger-zone"><Button variant="ghost" icon="trash" loading={remove.pending} onClick={onDelete}>Supprimer cette absence</Button></div>
           </div>
         </div>
       )}

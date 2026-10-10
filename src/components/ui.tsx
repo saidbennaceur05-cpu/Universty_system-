@@ -8,7 +8,7 @@ import { ABSENCE_STATUS_LABEL, CERTIFICATE_STATUS_LABEL } from "../types";
 export type IconName =
   | "grid" | "students" | "teacher" | "calendar" | "file" | "logout" | "search" | "plus" | "edit" | "trash"
   | "chevron" | "chevronLeft" | "chevronDown" | "menu" | "close" | "eye" | "eyeOff" | "upload" | "check" | "alert"
-  | "more" | "book" | "clock" | "lock" | "key" | "info" | "refresh" | "user" | "list" | "warning" | "download" | "checkAll" | "ban";
+  | "more" | "book" | "clock" | "lock" | "key" | "info" | "refresh" | "user" | "list" | "warning" | "download" | "checkAll" | "ban" | "chart" | "settings" | "mail";
 
 const icons: Record<IconName, ReactNode> = {
   grid: <><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /></>,
@@ -44,6 +44,9 @@ const icons: Record<IconName, ReactNode> = {
   list: <><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" /></>,
   download: <><path d="M12 4v12M7 11l5 5 5-5M5 20h14" /></>,
   ban: <><circle cx="12" cy="12" r="10" /><path d="m4.9 4.9 14.2 14.2" /></>,
+  chart: <><path d="M3 3v18h18" /><rect x="7" y="11" width="3" height="6" /><rect x="12" y="7" width="3" height="10" /><rect x="17" y="13" width="3" height="4" /></>,
+  settings: <><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" /></>,
+  mail: <><rect x="2" y="4" width="20" height="16" rx="2" /><path d="m22 7-10 5L2 7" /></>,
 };
 
 export function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
