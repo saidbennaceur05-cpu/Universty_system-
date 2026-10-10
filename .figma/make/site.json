@@ -1,5 +1,7 @@
 {
-  "description": "Streamline student absence management for university administrators with a responsive dashboard featuring real-time data tracking, reporting, and certificate uploads.",
+  "title": "UniAbsence",
+  "language": "fr",
+  "description": "UniAbsence : gestion des absences universitaires pour l'administration, les enseignants et les étudiants (appel, justificatifs, validation).",
   "robots": {
     "index": false
   },
